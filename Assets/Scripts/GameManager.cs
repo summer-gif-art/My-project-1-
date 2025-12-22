@@ -3,15 +3,13 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public GameObject HUD;
-    public GameObject Player;
-    
-    [SerializeField]
-    private GameObject MainMenu;
+    public GameObject hud;
+    public GameObject player;
+    [SerializeField] private GameObject mainMenu;
+
     public static GameManager Instance { get; private set; }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Awake()
     {
         if (Instance != null && Instance != this)
         {
@@ -20,41 +18,45 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        
         DontDestroyOnLoad(gameObject);
+    }
 
-        PauseGame();
+    private void Start()
+    {
+        ResumeGame(); // start playing immediately
 
     }
 
-    public void QuitGame()
+    public void EndGame()
     {
-        #if UNITY_EDITOR
-        EditorApplication.isPlaying = false;
-        #else
-        Application.Quit();
-        #endif
+        Time.timeScale = 0f;
+
+        // Keep the HUD active to display the win/lose message
+        if (hud != null) hud.SetActive(true);
+
+        Debug.Log("EndGame() called -> Game stopped");
     }
 
     public void ResumeGame()
     {
-        Time.timeScale = 1;
-        MainMenu.SetActive(false);
-        HUD.SetActive(true);
+        Time.timeScale = 1f;
+        if (mainMenu != null) mainMenu.SetActive(false);
+        if (hud != null) hud.SetActive(true);
     }
-    
+
     public void PauseGame()
     {
-        Time.timeScale = 0;
-        MainMenu.SetActive(true);
-        HUD.SetActive(false);
+        Time.timeScale = 0f;
+        if (mainMenu != null) mainMenu.SetActive(true);
+        if (hud != null) hud.SetActive(false);
     }
 
-
-
-    // Update is called once per frame
-    void Update()
+    public void QuitGame()
     {
-        
+#if UNITY_EDITOR
+        EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }

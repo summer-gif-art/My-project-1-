@@ -4,175 +4,223 @@ using UnityEngine;
 public class EnemyController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Transform player;          
-    [SerializeField] private Animator animator;         
-    [SerializeField] private Health health;             
-    [SerializeField] private SpriteRenderer spriteRenderer; 
+    [SerializeField] private Transform player;             
+    [SerializeField] private Animator animator;
+    [SerializeField] private Health health;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private EnemyAttackRange attackRange;
 
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 2f;      
-    [SerializeField] private float stopDistance = 1.5f; 
+    [SerializeField] private float moveSpeed = 2f;
 
     [Header("Attack Settings")]
-    [SerializeField] private float attackCooldown = 2f; 
-    [SerializeField] private float attackDelay = 0.3f;  
-    [SerializeField] private int normalDamage = 30;     
-    [SerializeField] private int strongDamage = 60;     
+    [SerializeField] private float attackCooldown = 2f;
+    [SerializeField] private float attackDelay = 0.3f;
+    [SerializeField] private int normalDamage = 30;
+    [SerializeField] private int strongDamage = 60;
+
+    [Header("Hit Distance (X axis only)")]
+    [SerializeField] private float hitDistance = 1.6f;
 
     [Header("Enemy Type")]
-    [SerializeField] private bool isStrongEnemy;        
-    [SerializeField] private Color strongTint = Color.green; 
+    [SerializeField] private bool isStrongEnemy;
+    [SerializeField] private Color strongTint = Color.green;
 
+    [Header("Chase On X Only (recommended for beat'em up)")]
+    [SerializeField] private bool chaseOnXOnly = true;
+
+    private Rigidbody2D _rb;
     private Coroutine _attackRoutine;
-    private bool _isDead;
-    private bool _isHurt;   //  enemy cannot attack/move while hurt
 
-    // Animator parameter hashes 
-    private static readonly int PunchTriggerHash   = Animator.StringToHash("Punch");
-    private static readonly int IsWalkingBoolHash  = Animator.StringToHash("IsWalking");
-    private static readonly int DieTriggerHash     = Animator.StringToHash("Die");
-    private static readonly int HurtTriggerHash    = Animator.StringToHash("Hurt"); // hurt animation trigger
+    private bool _isDead;
+    private bool _isHurt;
+
+    private static readonly int PunchTriggerHash = Animator.StringToHash("Punch");
+    private static readonly int IsWalkingBoolHash = Animator.StringToHash("IsWalking");
+    private static readonly int DieTriggerHash = Animator.StringToHash("Die");
+    private static readonly int HurtTriggerHash = Animator.StringToHash("Hurt");
 
     private void Awake()
     {
-        // Auto-assign components if not set in Inspector
-        if (health == null)
-            health = GetComponent<Health>();
+        if (health == null) health = GetComponent<Health>();
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (animator == null) animator = GetComponent<Animator>();
+        _rb = GetComponent<Rigidbody2D>();
 
-        if (spriteRenderer == null)
-            spriteRenderer = GetComponent<SpriteRenderer>();
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p != null) player = p.transform;
+        }
     }
 
     private void Start()
     {
-        // Randomly determine if this enemy is strong
+        // Random enemy type
         isStrongEnemy = Random.value > 0.5f;
-
-        // Tint strong enemies visually
         if (isStrongEnemy && spriteRenderer != null)
             spriteRenderer.color = strongTint;
 
         // Subscribe to health events
         if (health != null)
         {
-            health.OnDeath   += OnDeath;
-            health.OnDamaged += OnDamaged;   // called whenever the enemy takes damage
+            health.OnDeath += OnDeath;
+            health.OnDamaged += OnDamaged;
+        }
+
+        if (_rb != null)
+            _rb.freezeRotation = true;
+
+        if (attackRange == null)
+            Debug.LogWarning("EnemyController: Missing EnemyAttackRange reference! Assign it in the Inspector.");
+
+        // OPTIONAL: ground snap (only works if you have a Ground layer)
+        // If you don't have a "Ground" layer, comment this block out.
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 20f, LayerMask.GetMask("Ground"));
+        if (hit.collider != null)
+        {
+            Vector3 p = transform.position;
+            p.y = hit.point.y;
+            transform.position = p;
         }
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
-        // Enemy cannot move/attack while dead or hurt
-        if (_isDead || _isHurt || player == null)
+        if (_isDead || _isHurt || player == null || _rb == null)
             return;
 
-        float distance = Vector2.Distance(transform.position, player.position);
+        bool inRange = attackRange != null && attackRange.PlayerInRange;
+        float dx = Mathf.Abs(_rb.position.x - player.position.x);
 
-        if (distance > stopDistance)
+        // Debug (optional)
+        Debug.Log($"InRange={inRange} dx={dx:F3} hitDist={hitDistance}");
+
+        // Not in trigger range -> chase
+        if (!inRange)
         {
-            // Player is far → chase
-            MoveTowardsPlayer();
-
-            // If player moved away, stop any running attack coroutine
-            if (_attackRoutine != null)
-            {
-                StopCoroutine(_attackRoutine);
-                _attackRoutine = null;
-            }
+            MoveTowardsPlayer_Physics();
+            StopAttackRoutineIfRunning();
+            return;
         }
-        else
+
+        // In trigger range but not close enough -> keep moving closer
+        if (!IsCloseEnoughToHit())
         {
-            // Player is in attack range
-            if (animator != null)
-                animator.SetBool(IsWalkingBoolHash, false);
-
-            // Start a NEW attack cycle only if not already attacking
-            if (_attackRoutine == null)
-            {
-                _attackRoutine = StartCoroutine(AttackRoutine());
-            }
+            MoveTowardsPlayer_Physics();
+            StopAttackRoutineIfRunning();
+            return;
         }
+
+        // Close enough -> stop and attack
+        if (animator != null)
+            animator.SetBool(IsWalkingBoolHash, false);
+
+        // Stop movement so the enemy doesn't keep sliding while attacking
+        if (_rb != null)
+            _rb.linearVelocity = Vector2.zero;
+
+        if (_attackRoutine == null)
+            _attackRoutine = StartCoroutine(AttackRoutine());
     }
 
-    private void MoveTowardsPlayer()
+    private void MoveTowardsPlayer_Physics()
     {
-        if (player == null) return;
+        Vector2 pos = _rb.position;
+        Vector2 target = player.position;
 
-        // Move direction
-        Vector3 direction = (player.position - transform.position).normalized;
-        float step = moveSpeed * Time.deltaTime;
-        transform.position += direction * step;
+        if (chaseOnXOnly)
+            target.y = pos.y;
 
-        // Play walking animation
+        Vector2 dir = target - pos;
+
+        if (dir.sqrMagnitude < 0.0001f)
+        {
+            if (animator != null) animator.SetBool(IsWalkingBoolHash, false);
+            return;
+        }
+
+        dir.Normalize();
+
+        Vector2 newPos = pos + dir * (moveSpeed * Time.fixedDeltaTime);
+        _rb.MovePosition(newPos);
+
         if (animator != null)
             animator.SetBool(IsWalkingBoolHash, true);
 
-        // Flip sprite depending on movement direction
         if (spriteRenderer != null)
         {
-            if (direction.x < 0)
-                spriteRenderer.flipX = true;
-            else if (direction.x > 0)
-                spriteRenderer.flipX = false;
+            if (dir.x < 0) spriteRenderer.flipX = false;
+            else if (dir.x > 0) spriteRenderer.flipX = true;
+            Debug.Log($"dir.x={dir.x:F2} flipX={spriteRenderer.flipX} SR={spriteRenderer.name}");
+
         }
     }
 
-    // A single attack cycle (not a loop), allowing interruption when hurt
-    private IEnumerator AttackRoutine()   // NEW – replaces AttackLoop
+    private bool IsCloseEnoughToHit()
     {
-        if (_isDead || player == null)
+        if (_rb == null || player == null) return false;
+        float dx = Mathf.Abs(_rb.position.x - player.position.x);
+        return dx <= hitDistance;
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        Debug.Log("AttackRoutine START");
+
+        if (_isDead || _isHurt)
         {
             _attackRoutine = null;
             yield break;
         }
 
-        // Play attack animation
         if (animator != null)
         {
-            animator.SetTrigger(PunchTriggerHash);
             animator.SetBool(IsWalkingBoolHash, false);
+            animator.SetTrigger(PunchTriggerHash);
         }
 
-        // Wait until the actual hit moment in the punch animation
         yield return new WaitForSeconds(attackDelay);
 
-        // Deal damage only if still valid (not hurt/dead)
-        if (!_isDead && !_isHurt && player != null)
+        bool canDamage =
+            !_isDead && !_isHurt &&
+            attackRange != null && attackRange.PlayerInRange &&
+            IsCloseEnoughToHit();
+
+        Debug.Log($"Trying to damage. InRange={attackRange != null && attackRange.PlayerInRange}, Close={IsCloseEnoughToHit()}, PlayerHealthNull={(attackRange == null || attackRange.PlayerHealth == null)}");
+
+        if (canDamage)
         {
-            Health playerHealth = player.GetComponent<Health>();
+            Health playerHealth = attackRange.PlayerHealth;
+
             if (playerHealth != null && !playerHealth.IsDead)
             {
-                float distance = Vector2.Distance(transform.position, player.position);
-                if (distance <= stopDistance + 0.1f)
-                {
-                    int damage = isStrongEnemy ? strongDamage : normalDamage;
-                    playerHealth.TakeDamage(damage);
-                }
+                int dmg = isStrongEnemy ? strongDamage : normalDamage;
+                playerHealth.TakeDamage(dmg);
+                Debug.Log($"DAMAGE APPLIED: {dmg}");
             }
         }
 
-        // Cooldown before another attack is allowed
         yield return new WaitForSeconds(attackCooldown);
-
-        // Allow starting a new attack
         _attackRoutine = null;
     }
 
-    // Called every time the enemy takes damage
-    private void OnDamaged()   // NEW
+    private void StopAttackRoutineIfRunning()
     {
-        if (_isDead) return;
-
-        _isHurt = true;   // Enemy becomes "stunned" briefly
-
-        // Cancel any running attack (required by assignment)
         if (_attackRoutine != null)
         {
             StopCoroutine(_attackRoutine);
             _attackRoutine = null;
         }
+    }
 
-        // Play hurt animation
+    private void OnDamaged()
+    {
+        if (_isDead) return;
+
+        _isHurt = true;
+        StopAttackRoutineIfRunning();
+
         if (animator != null)
         {
             animator.ResetTrigger(PunchTriggerHash);
@@ -183,35 +231,70 @@ public class EnemyController : MonoBehaviour
         StartCoroutine(HurtRoutine());
     }
 
-    // Duration of Hurt state
-    private IEnumerator HurtRoutine()   
+    private IEnumerator HurtRoutine()
     {
-        yield return new WaitForSeconds(0.3f); // Match your Hurt animation length
+        yield return new WaitForSeconds(0.3f);
         _isHurt = false;
     }
 
     private void OnDeath()
     {
+        if (_isDead) return;   // חשוב! למנוע קריאה כפולה
         _isDead = true;
 
-        // Stop any attack activity
-        if (_attackRoutine != null)
-        {
-            StopCoroutine(_attackRoutine);
-            _attackRoutine = null;
-        }
+        StopAttackRoutineIfRunning();
 
-        // Play death animation
         if (animator != null)
         {
             animator.SetBool(IsWalkingBoolHash, false);
             animator.SetTrigger(DieTriggerHash);
         }
 
-        // Disable collider so the corpse doesn't block the player
         Collider2D col = GetComponent<Collider2D>();
-        if (col != null)
-            col.enabled = false;
+        if (col != null) col.enabled = false;
 
+        if (_rb != null)
+        {
+            _rb.linearVelocity = Vector2.zero;
+            _rb.angularVelocity = 0f;
+            _rb.constraints = RigidbodyConstraints2D.FreezeAll;
+        }
+
+        StartCoroutine(BlinkAndDisappear());
     }
+
+    
+    private IEnumerator BlinkAndDisappear()
+    {
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("Blink: spriteRenderer is NULL");
+            yield break;
+        }
+
+        Debug.Log("Blink START");
+
+        // תן רגע לראות את ה-Die לפני ההבהוב
+        float preDelay = 0.2f;
+        float end = Time.realtimeSinceStartup + 1f;  // 1 שנייה הבהוב
+        float interval = 0.1f;
+        float nextToggle = Time.realtimeSinceStartup + preDelay;
+
+        spriteRenderer.enabled = true;
+
+        while (Time.realtimeSinceStartup < end)
+        {
+            if (Time.realtimeSinceStartup >= nextToggle)
+            {
+                spriteRenderer.enabled = !spriteRenderer.enabled;
+                nextToggle += interval;
+            }
+            yield return null; // מחכה פריים (לא תלוי timescale)
+        }
+
+        spriteRenderer.enabled = true;
+        Debug.Log("Blink END -> Destroy");
+        Destroy(gameObject);
+    }
+    
 }

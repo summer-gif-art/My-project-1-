@@ -4,7 +4,7 @@ using UnityEngine;
 public class HUD : MonoBehaviour
 {
     [SerializeField]
-    private TMP_Text ScoreText;
+    private TMP_Text scoreText;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -14,12 +14,8 @@ public class HUD : MonoBehaviour
     
     public void UpdateScore(int score)
     {
-        ScoreText.text = $"Score: {score}";
+        scoreText.text = $"Score: {score}";
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    
 }

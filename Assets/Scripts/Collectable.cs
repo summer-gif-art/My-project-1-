@@ -19,7 +19,7 @@ public class Collectable : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            GameManager.Instance.Player.GetComponent<PlayerMovement>().AddScore(score);
+            GameManager.Instance.player.GetComponent<PlayerMovement>().AddScore(score);
 
             Destroy(gameObject);
             Debug.Log($"$On trigger enter = {other.name}");
