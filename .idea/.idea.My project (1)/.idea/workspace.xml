@@ -5,10 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="568e361a-f1a5-4acb-b25d-e1a0cbdc14e8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Assets/Animations/Player/Player_Controller.controller" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/Animations/Player/Player_Controller.controller.meta" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.My project (1)/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.My project (1)/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/LAST_UPDATE_HW_2.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/LAST_UPDATE_HW_2.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scripts/Collectable.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Collectable.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/EnemyAttackRange.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/EnemyAttackRange.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scripts/EnemyController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/EnemyController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/GameManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/GameManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/GameUI.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/GameUI.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/HUD.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/HUD.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Health.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Health.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/PlayerMovement.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/PlayerMovement.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/PlayerPunch.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/PlayerPunch.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,6 +28,13 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="mock://C:/Users/samar/My project (1)/Assets/LAST_UPDATE_HW_2.unity" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/LAST_UPDATE_HW_2.unity" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/samar/My project (1)/Assets/LAST_UPDATE_HW_2.unity" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/samar/My project (1)/Assets/Scripts/Collectable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/samar/My project (1)/Assets/Scripts/Collectable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/samar/My project (1)/Assets/Scripts/Collectable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/samar/My project (1)/Assets/Scripts/Collectable.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/Scripts/PlayerAnimator.controller" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
@@ -34,7 +50,7 @@
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Merging main&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -115,6 +131,8 @@
       <workItem from="1767561995140" duration="94000" />
       <workItem from="1767575132310" duration="1091000" />
       <workItem from="1767576987482" duration="755000" />
+      <workItem from="1767606555133" duration="1156000" />
+      <workItem from="1767608656672" duration="811000" />
     </task>
     <servers />
   </component>

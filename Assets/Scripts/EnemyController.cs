@@ -185,9 +185,8 @@ public class EnemyController : MonoBehaviour
         bool canDamage =
             !_isDead && !_isHurt &&
             attackRange != null && attackRange.PlayerInRange &&
-            IsCloseEnoughToHit();
-
-        Debug.Log($"Trying to damage. InRange={attackRange != null && attackRange.PlayerInRange}, Close={IsCloseEnoughToHit()}, PlayerHealthNull={(attackRange == null || attackRange.PlayerHealth == null)}");
+            IsCloseEnoughToHit() &&
+            IsPlayerInFrontOfEnemy();  
 
         if (canDamage)
         {
@@ -203,6 +202,24 @@ public class EnemyController : MonoBehaviour
 
         yield return new WaitForSeconds(attackCooldown);
         _attackRoutine = null;
+    }
+    
+    private bool IsPlayerInFrontOfEnemy()
+    {
+        if (player == null || _rb == null) return false;
+    
+        // Check which way enemy is facing
+        bool facingRight = spriteRenderer != null && spriteRenderer.flipX;
+    
+        // Check where player is relative to enemy
+        float directionToPlayer = player.position.x - _rb.position.x;
+    
+        // If facing right, player must be on the right (directionToPlayer > 0)
+        // If facing left, player must be on the left (directionToPlayer < 0)
+        if (facingRight && directionToPlayer > 0) return true;
+        if (!facingRight && directionToPlayer < 0) return true;
+    
+        return false;
     }
 
     private void StopAttackRoutineIfRunning()

@@ -2,27 +2,19 @@ using UnityEngine;
 
 public class Collectable : MonoBehaviour
 {
-    private const int score = 10;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [SerializeField] private int scoreValue = 10;
     
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag(Tags.Player))
         {
-            GameManager.Instance.player.GetComponent<PlayerMovement>().AddScore(score);
-
-            Destroy(gameObject);
-            Debug.Log($"$On trigger enter = {other.name}");
+            PlayerMovement player = other.GetComponent<PlayerMovement>();
+            if (player != null)
+            {
+                player.AddScore(scoreValue);
+                Debug.Log($"Collectible picked up by {other.name}");
+                Destroy(gameObject);
+            }
         }
     }
 }

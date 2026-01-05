@@ -8,6 +8,8 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Optional Collectable Reference")]
     [SerializeField] private GameObject diamond;
+    [Header("Score")]
+    private int score = 0;
 
     // Movement & state
     private Vector3 _direction = Vector3.zero;
@@ -85,5 +87,12 @@ public class PlayerMovement : MonoBehaviour
         Vector2 newPosition = _rb.position + (Vector2)_direction * (speed * Time.fixedDeltaTime);
         _rb.MovePosition(newPosition);
     }
+    public void AddScore(int amount) {
+        score += amount;
+        Debug.Log($"Score: {score}");
+    }
+
+    // Optional: Public property to read the current score
+    public int GetScore() => score;
     
 }
