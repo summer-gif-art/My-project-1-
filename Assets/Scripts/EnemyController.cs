@@ -237,22 +237,33 @@ public class EnemyController : MonoBehaviour
         _isHurt = false;
     }
 
+       // Bonus toggle:
+       // If true  -> enemy blinks for 1 second and disappears (BONUS requirement)
+       // If false -> enemy stays on the ground as a dead body
+    [SerializeField] private bool enableBonusDisappear = true;
+
     private void OnDeath()
     {
-        if (_isDead) return;   // חשוב! למנוע קריאה כפולה
+        if (_isDead) return;          // Prevent double execution
         _isDead = true;
 
+        // Stop any running attack coroutine (required by combat rules)
         StopAttackRoutineIfRunning();
 
+        // Play death animation and stop all movement animations
         if (animator != null)
         {
             animator.SetBool(IsWalkingBoolHash, false);
-            animator.SetTrigger(DieTriggerHash);
+            animator.ResetTrigger(PunchTriggerHash); // Safety: cancel pending attack trigger
+            animator.SetTrigger(DieTriggerHash);     // Death animation (enemy lies on ground)
         }
 
+        // Disable collider so the enemy no longer interacts or triggers range logic
         Collider2D col = GetComponent<Collider2D>();
-        if (col != null) col.enabled = false;
+        if (col != null)
+            col.enabled = false;
 
+        // Fully stop and freeze physics so the enemy does NOT move at all
         if (_rb != null)
         {
             _rb.linearVelocity = Vector2.zero;
@@ -260,8 +271,26 @@ public class EnemyController : MonoBehaviour
             _rb.constraints = RigidbodyConstraints2D.FreezeAll;
         }
 
-        StartCoroutine(BlinkAndDisappear());
+        // Disable attack range logic so PlayerInRange is never updated again
+        if (attackRange != null)
+            attackRange.enabled = false;
+
+        // BONUS: blink for 1 second and then disappear
+        if (enableBonusDisappear)
+        {
+            StartCoroutine(BlinkAndDisappear());
+            // because the coroutine needs this MonoBehaviour to run
+            enabled = false; // stop AI logic, coroutine still runs
+
+        }
+        else
+        {
+            // Regular requirement: enemy stays on the ground doing nothing
+            // Disable AI logic completely (no FixedUpdate, no movement, no attacks)
+            enabled = false;
+        }
     }
+
 
     
     private IEnumerator BlinkAndDisappear()
@@ -274,9 +303,8 @@ public class EnemyController : MonoBehaviour
 
         Debug.Log("Blink START");
 
-        // תן רגע לראות את ה-Die לפני ההבהוב
         float preDelay = 0.2f;
-        float end = Time.realtimeSinceStartup + 1f;  // 1 שנייה הבהוב
+        float end = Time.realtimeSinceStartup + 1f; 
         float interval = 0.1f;
         float nextToggle = Time.realtimeSinceStartup + preDelay;
 
@@ -289,7 +317,7 @@ public class EnemyController : MonoBehaviour
                 spriteRenderer.enabled = !spriteRenderer.enabled;
                 nextToggle += interval;
             }
-            yield return null; // מחכה פריים (לא תלוי timescale)
+            yield return null; 
         }
 
         spriteRenderer.enabled = true;

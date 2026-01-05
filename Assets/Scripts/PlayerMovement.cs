@@ -11,7 +11,6 @@ public class PlayerMovement : MonoBehaviour
 
     // Movement & state
     private Vector3 _direction = Vector3.zero;
-    private int _score;
     private Vector3 _originalScale;
 
     // Cached components
@@ -86,16 +85,5 @@ public class PlayerMovement : MonoBehaviour
         Vector2 newPosition = _rb.position + (Vector2)_direction * (speed * Time.fixedDeltaTime);
         _rb.MovePosition(newPosition);
     }
-
-    public void AddScore(int amount)
-    {
-        _score += amount;
-
-        if (GameManager.Instance != null && GameManager.Instance.hud != null)
-        {
-             HUD hud = GameManager.Instance.hud.GetComponent<HUD>();
-            if (hud != null)
-                hud.UpdateScore(_score);
-        }
-    }
+    
 }
