@@ -9,15 +9,20 @@ public class PlayerPunch : MonoBehaviour
 
     [Header("Hitbox")]
     [SerializeField] private BoxCollider2D hitbox;
-    [SerializeField] private float hitboxOffsetX = 0.6f;
+    [SerializeField] private float hitboxOffsetX = 0.3f; // keep your good distance
 
     [Header("Attack Settings")]
     [SerializeField] private int damage = 50;
     [SerializeField] private float attackDuration = 0.2f;
-    [SerializeField] private string punchTriggerName = "Punch";
 
     private bool _isAttacking;
     private bool _hitThisPunch;
+
+    // Reused buffer (no allocations per punch)
+    private readonly Collider2D[] _hits = new Collider2D[8];
+    private ContactFilter2D _filter;
+
+    private static readonly int PunchHash = Animator.StringToHash("Punch");
 
     private void Start()
     {
@@ -38,6 +43,9 @@ public class PlayerPunch : MonoBehaviour
 
         hitbox.isTrigger = true;
         hitbox.enabled = false;
+
+        // Only detect solid colliders (enemy body), ignore triggers
+        _filter = new ContactFilter2D { useTriggers = false };
     }
 
     private void Update()
@@ -57,20 +65,21 @@ public class PlayerPunch : MonoBehaviour
         _isAttacking = true;
         _hitThisPunch = false;
 
-// move hitbox to facing side
+        // IMPORTANT: PlayerPunch is on PunchHitbox (child),
+        // so get facing from PLAYER (root), not from this transform.
         float facing = Mathf.Sign(transform.root.localScale.x); // +1 right, -1 left
+
+        // Flip hitbox ONLY by offset sign (same distance/size as before)
         Vector2 off = hitbox.offset;
         off.x = facing * Mathf.Abs(hitboxOffsetX);
         hitbox.offset = off;
 
-
-
         if (animator != null)
-            animator.SetTrigger(punchTriggerName);
+            animator.SetTrigger(PunchHash);
 
         hitbox.enabled = true;
 
-        // immediate overlap check
+        // One overlap check during the punch window
         TryHitNow();
 
         yield return new WaitForSeconds(attackDuration);
@@ -79,42 +88,31 @@ public class PlayerPunch : MonoBehaviour
         _isAttacking = false;
     }
 
-    private void OnTriggerStay2D(Collider2D other)
-    {
-        if (!hitbox.enabled || !_isAttacking || _hitThisPunch)
-            return;
-
-        TryDamage(other);
-    }
-
     private void TryHitNow()
     {
         if (_hitThisPunch) return;
 
-        Collider2D[] hits = new Collider2D[8];
-        ContactFilter2D filter = new ContactFilter2D();
-        filter.useTriggers = true;
-
-        int count = hitbox.Overlap(filter, hits);
+        int count = hitbox.Overlap(_filter, _hits);
         for (int i = 0; i < count; i++)
         {
-            if (hits[i] != null)
-            {
-                TryDamage(hits[i]);
-                if (_hitThisPunch) return;
-            }
+            Collider2D c = _hits[i];
+            if (c == null) continue;
+
+            TryDamage(c);
+            if (_hitThisPunch) return;
         }
     }
 
     private void TryDamage(Collider2D other)
     {
         if (_hitThisPunch) return;
+        if (other == null) return;
+        if (other.isTrigger) return;
 
         Health enemyHealth = other.GetComponentInParent<Health>();
         if (enemyHealth != null && enemyHealth != playerHealth)
         {
             _hitThisPunch = true;
-            Debug.Log("Hit enemy! Damage: " + damage);
             enemyHealth.TakeDamage(damage);
         }
     }

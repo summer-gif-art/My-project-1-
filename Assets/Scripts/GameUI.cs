@@ -1,21 +1,26 @@
-using UnityEngine;
+using System.Collections;
 using TMPro;
+using UnityEngine;
 
 public class GameUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI winLoseText;
     [SerializeField] private Health playerHealth;
     [SerializeField] private Health enemyHealth;
-    
+
+    // Animator parameter hash for performance
     private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
-    
+
+    // Prevents multiple win/lose triggers
     private bool _gameEnded;
 
     private void Start()
     {
+        // Hide the win/lose message at the beginning
         if (winLoseText != null)
             winLoseText.gameObject.SetActive(false);
 
+        // Subscribe to death events
         if (playerHealth != null)
             playerHealth.OnDeath += OnPlayerDeath;
 
@@ -23,28 +28,45 @@ public class GameUI : MonoBehaviour
             enemyHealth.OnDeath += OnEnemyDeath;
     }
 
+    // Called when the player dies
     private void OnPlayerDeath()
     {
         if (_gameEnded) return;
-        ShowMessage("YOU LOSE");
+
+        // Delay allows final animations to complete
+        StartCoroutine(ShowMessageAfterDelay("YOU LOSE", 0.2f));
     }
 
+    // Called when the enemy dies
     private void OnEnemyDeath()
     {
         if (_gameEnded) return;
-        ShowMessage("YOU WON");
+
+        // Delay ensures the final punch animation is visible
+        StartCoroutine(ShowMessageAfterDelay("YOU WON", 0.2f));
     }
 
-    private void ShowMessage(string msg)
+    // Shows the result message after a short real-time delay
+    private IEnumerator ShowMessageAfterDelay(string msg, float delaySeconds)
     {
         _gameEnded = true;
 
+        // Use real-time delay so it works even if Time.timeScale is set to 0 later
+        yield return new WaitForSecondsRealtime(delaySeconds);
+
+        ShowMessageNow(msg);
+    }
+
+    // Displays the win/lose message and freezes player input
+    private void ShowMessageNow(string msg)
+    {
         if (winLoseText == null) return;
 
+        // Update and display the UI text
         winLoseText.text = msg;
         winLoseText.gameObject.SetActive(true);
 
-        //  Freeze player animation/state to one consistent pose
+        // Disable player control scripts while keeping the current animation pose
         if (playerHealth != null)
         {
             var pm = playerHealth.GetComponentInChildren<PlayerMovement>();
@@ -56,15 +78,13 @@ public class GameUI : MonoBehaviour
             var anim = playerHealth.GetComponentInChildren<Animator>();
             if (anim != null)
             {
-                anim.Rebind();                // resets to default state
-                anim.Update(0f);
+                // Stop walking animation without resetting the animator state
                 anim.SetBool(IsWalkingHash, false);
             }
         }
 
+        // Freeze the game
         if (GameManager.Instance == null) return;
-        GameManager.Instance.EndGame();
+        GameManager.Instance.EndGame(); // Sets Time.timeScale = 0
     }
-
-
 }
