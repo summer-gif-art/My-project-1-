@@ -49,7 +49,7 @@ public class EnemyController : MonoBehaviour
 
         if (player == null)
         {
-            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            GameObject p = GameObject.FindGameObjectWithTag(Tags.Player);
             if (p != null) player = p.transform;
         }
     }
@@ -296,5 +296,6 @@ public class EnemyController : MonoBehaviour
         Debug.Log("Blink END -> Destroy");
         Destroy(gameObject);
     }
+    
     
 }

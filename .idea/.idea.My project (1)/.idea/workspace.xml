@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="568e361a-f1a5-4acb-b25d-e1a0cbdc14e8" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.My project (1)/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.My project (1)/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/LAST_UPDATE_HW_2.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/LAST_UPDATE_HW_2.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Collectable.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Collectable.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/EnemyController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/EnemyController.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,6 +17,9 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Assets/Scripts/PlayerAnimator.controller" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
@@ -103,7 +109,12 @@
       <updated>1765914645158</updated>
       <workItem from="1765914647780" duration="300000" />
       <workItem from="1766437837648" duration="5890000" />
-      <workItem from="1766493696985" duration="3122000" />
+      <workItem from="1766493696985" duration="3511000" />
+      <workItem from="1767317068662" duration="2245000" />
+      <workItem from="1767555742190" duration="7000" />
+      <workItem from="1767561995140" duration="94000" />
+      <workItem from="1767575132310" duration="1091000" />
+      <workItem from="1767576987482" duration="755000" />
     </task>
     <servers />
   </component>

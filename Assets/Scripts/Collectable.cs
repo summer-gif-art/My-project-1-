@@ -17,7 +17,7 @@ public class Collectable : MonoBehaviour
     
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag(Tags.Player))
         {
             GameManager.Instance.player.GetComponent<PlayerMovement>().AddScore(score);
 
