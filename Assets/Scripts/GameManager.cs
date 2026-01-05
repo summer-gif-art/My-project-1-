@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -29,16 +31,22 @@ public class GameManager : MonoBehaviour
         ResumeGame(); // Start playing immediately
     }
 
-    public void EndGame()
+    
+    public void EndGame(float delayRealtime = 0.4f)
     {
-        // Pause the game (UI still works, since it's not timeScale-dependent)
+        StartCoroutine(EndGameRoutine(delayRealtime));
+    }
+
+    private IEnumerator EndGameRoutine(float delayRealtime)
+    {
+        yield return new WaitForSecondsRealtime(delayRealtime);
         Time.timeScale = 0f;
 
         // Keep HUD active so the win/lose message can be shown
         if (hud != null) hud.SetActive(true);
-
         Debug.Log("EndGame() called -> Game stopped");
     }
+    
 
     public void ResumeGame()
     {

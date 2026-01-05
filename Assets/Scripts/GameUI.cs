@@ -34,7 +34,7 @@ public class GameUI : MonoBehaviour
         if (_gameEnded) return;
 
         // Delay allows final animations to complete
-        StartCoroutine(ShowMessageAfterDelay("YOU LOSE", 0.2f));
+        StartCoroutine(ShowMessageAfterDelay("YOU LOSE", 0.4f));
     }
 
     // Called when the enemy dies
@@ -43,7 +43,7 @@ public class GameUI : MonoBehaviour
         if (_gameEnded) return;
 
         // Delay ensures the final punch animation is visible
-        StartCoroutine(ShowMessageAfterDelay("YOU WON", 0.2f));
+        StartCoroutine(ShowMessageAfterDelay("YOU WON", 0.4f));
     }
 
     // Shows the result message after a short real-time delay
@@ -75,6 +75,14 @@ public class GameUI : MonoBehaviour
             var pp = playerHealth.GetComponentInChildren<PlayerPunch>();
             if (pp != null) pp.enabled = false;
 
+            var rb = playerHealth.GetComponentInChildren<Rigidbody2D>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+                rb.constraints = RigidbodyConstraints2D.FreezeAll;
+            }
+            
             var anim = playerHealth.GetComponentInChildren<Animator>();
             if (anim != null)
             {
@@ -85,6 +93,6 @@ public class GameUI : MonoBehaviour
 
         // Freeze the game
         if (GameManager.Instance == null) return;
-        GameManager.Instance.EndGame(); // Sets Time.timeScale = 0
+        GameManager.Instance.EndGame(0.4f);
     }
 }

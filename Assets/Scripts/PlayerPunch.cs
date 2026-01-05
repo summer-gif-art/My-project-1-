@@ -9,7 +9,7 @@ public class PlayerPunch : MonoBehaviour
 
     [Header("Hitbox")]
     [SerializeField] private BoxCollider2D hitbox;
-    [SerializeField] private float hitboxOffsetX = 0.3f; // keep your good distance
+    [SerializeField] private float hitboxOffsetX = 0.25f;
 
     [Header("Attack Settings")]
     [SerializeField] private int damage = 50;
@@ -18,7 +18,7 @@ public class PlayerPunch : MonoBehaviour
     private bool _isAttacking;
     private bool _hitThisPunch;
 
-    // Reused buffer (no allocations per punch)
+    // Reuse buffers (no per-punch allocations)
     private readonly Collider2D[] _hits = new Collider2D[8];
     private ContactFilter2D _filter;
 
@@ -44,7 +44,6 @@ public class PlayerPunch : MonoBehaviour
         hitbox.isTrigger = true;
         hitbox.enabled = false;
 
-        // Only detect solid colliders (enemy body), ignore triggers
         _filter = new ContactFilter2D { useTriggers = false };
     }
 
@@ -59,18 +58,12 @@ public class PlayerPunch : MonoBehaviour
 
     private IEnumerator PunchRoutine()
     {
-        if (playerHealth != null && playerHealth.IsDead)
-            yield break;
-
         _isAttacking = true;
         _hitThisPunch = false;
 
-        // IMPORTANT: PlayerPunch is on PunchHitbox (child),
-        // so get facing from PLAYER (root), not from this transform.
-        float facing = Mathf.Sign(transform.root.localScale.x); // +1 right, -1 left
-
-        // Flip hitbox ONLY by offset sign (same distance/size as before)
-        Vector2 off = hitbox.offset;
+        // Move hitbox to facing side
+        float facing = Mathf.Sign(transform.root.localScale.x);
+        var off = hitbox.offset;
         off.x = facing * Mathf.Abs(hitboxOffsetX);
         hitbox.offset = off;
 
@@ -79,7 +72,7 @@ public class PlayerPunch : MonoBehaviour
 
         hitbox.enabled = true;
 
-        // One overlap check during the punch window
+        // One overlap check is usually enough for this assignment
         TryHitNow();
 
         yield return new WaitForSeconds(attackDuration);
@@ -95,7 +88,7 @@ public class PlayerPunch : MonoBehaviour
         int count = hitbox.Overlap(_filter, _hits);
         for (int i = 0; i < count; i++)
         {
-            Collider2D c = _hits[i];
+            var c = _hits[i];
             if (c == null) continue;
 
             TryDamage(c);
@@ -106,7 +99,6 @@ public class PlayerPunch : MonoBehaviour
     private void TryDamage(Collider2D other)
     {
         if (_hitThisPunch) return;
-        if (other == null) return;
         if (other.isTrigger) return;
 
         Health enemyHealth = other.GetComponentInParent<Health>();

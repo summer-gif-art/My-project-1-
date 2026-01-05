@@ -29,6 +29,14 @@ public class EnemyController : MonoBehaviour
     [Header("Chase On X Only (recommended for beat'em up)")]
     [SerializeField] private bool chaseOnXOnly = true;
 
+    [Header("BONUS")]
+    // If true  -> enemy blinks for 1 second and disappears
+    // If false -> enemy stays on the ground as a dead body
+    [SerializeField] private bool enableBonusDisappear = true;
+    
+    [SerializeField] private float deathDelay = 0.15f; // 0.1–0.25 feels good
+    private Coroutine _deathRoutine;
+
     private Rigidbody2D _rb;
     private Coroutine _attackRoutine;
 
@@ -74,7 +82,7 @@ public class EnemyController : MonoBehaviour
         if (attackRange == null)
             Debug.LogWarning("EnemyController: Missing EnemyAttackRange reference! Assign it in the Inspector.");
 
-        // OPTIONAL: ground snap (only works if you have a Ground layer)
+        // ground snap (only works if you have a Ground layer)
         // If you don't have a "Ground" layer, comment this block out.
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 20f, LayerMask.GetMask("Ground"));
         if (hit.collider != null)
@@ -93,7 +101,7 @@ public class EnemyController : MonoBehaviour
         bool inRange = attackRange != null && attackRange.PlayerInRange;
         float dx = Mathf.Abs(_rb.position.x - player.position.x);
 
-        // Debug (optional)
+        // Debug 
         Debug.Log($"InRange={inRange} dx={dx:F3} hitDist={hitDistance}");
 
         // Not in trigger range -> chase
@@ -253,34 +261,36 @@ public class EnemyController : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
         _isHurt = false;
     }
-
-       // Bonus toggle:
-       // If true  -> enemy blinks for 1 second and disappears (BONUS requirement)
-       // If false -> enemy stays on the ground as a dead body
-    [SerializeField] private bool enableBonusDisappear = true;
-
+    
     private void OnDeath()
     {
-        if (_isDead) return;          // Prevent double execution
+        if (_isDead) return;
         _isDead = true;
 
-        // Stop any running attack coroutine (required by combat rules)
         StopAttackRoutineIfRunning();
 
-        // Play death animation and stop all movement animations
+        // Trigger death animation immediately
         if (animator != null)
         {
             animator.SetBool(IsWalkingBoolHash, false);
-            animator.ResetTrigger(PunchTriggerHash); // Safety: cancel pending attack trigger
-            animator.SetTrigger(DieTriggerHash);     // Death animation (enemy lies on ground)
+            animator.ResetTrigger(PunchTriggerHash);
+            animator.SetTrigger(DieTriggerHash);
         }
 
-        // Disable collider so the enemy no longer interacts or triggers range logic
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null)
-            col.enabled = false;
+        // Start delayed cleanup so the last punch can be seen
+        if (_deathRoutine == null)
+            _deathRoutine = StartCoroutine(DeathRoutine());
+    }
 
-        // Fully stop and freeze physics so the enemy does NOT move at all
+    private IEnumerator DeathRoutine()
+    {
+        // Let the final punch frame / hit reaction be visible
+        yield return new WaitForSeconds(deathDelay);
+
+        // Disable colliders + physics AFTER the delay
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null) col.enabled = false;
+
         if (_rb != null)
         {
             _rb.linearVelocity = Vector2.zero;
@@ -288,24 +298,14 @@ public class EnemyController : MonoBehaviour
             _rb.constraints = RigidbodyConstraints2D.FreezeAll;
         }
 
-        // Disable attack range logic so PlayerInRange is never updated again
         if (attackRange != null)
             attackRange.enabled = false;
 
-        // BONUS: blink for 1 second and then disappear
-        if (enableBonusDisappear)
-        {
-            StartCoroutine(BlinkAndDisappear());
-            // because the coroutine needs this MonoBehaviour to run
-            enabled = false; // stop AI logic, coroutine still runs
+        // Stop AI updates, but coroutines can continue
+        enabled = false;
 
-        }
-        else
-        {
-            // Regular requirement: enemy stays on the ground doing nothing
-            // Disable AI logic completely (no FixedUpdate, no movement, no attacks)
-            enabled = false;
-        }
+        if (enableBonusDisappear)
+            StartCoroutine(BlinkAndDisappear());
     }
 
 
